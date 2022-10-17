@@ -13,15 +13,15 @@ class HomeLayout extends StatefulWidget {
 class _HomeLayoutState extends State<HomeLayout> {
   int currentIndex = 0;
   int index =0;
-List  tasks =[const NewTasks(),const NewArcived(),const NewDone()];
-List titles =['tasks','done','archived'];
+List <Widget> tasks =[ NewTasks(), NewArcived(), NewDone()];
+List <String> titles =['tasks','done','archived'];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(titles[currentIndex]),
       ),
-      body: Text(tasks[currentIndex]),
+      body: Text("${tasks[currentIndex]}"),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
 
