@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:untitled4/new_archived.dart';
 import 'package:untitled4/new_done.dart';
@@ -14,12 +15,17 @@ class HomeLayout extends StatefulWidget {
 class _HomeLayoutState extends State<HomeLayout> {
   int currentIndex = 0;
   int index = 0;
-  List<Widget> tasks = [NewTasks(), NewArcived(), NewDone()];
-  List<String> titles = ['tasks', 'done', 'archived'];
+  List<Widget> tasks = [NewTasks(), NewDone(), NewArcived()];
+  List<String> titles = ['Tasker', 'Done', 'Archived'];
   Database? database;
-  IconData iconData =Icons.add;
+  IconData iconData = Icons.add;
   var scaffoldKey = GlobalKey<ScaffoldState>();
-bool isBottomsheet =false;
+  var formKey = GlobalKey<FormState>();
+  var titleController = TextEditingController();
+  var timeController = TextEditingController();
+  var dateController = TextEditingController();
+  bool isBottomsheet = false;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -38,23 +44,116 @@ bool isBottomsheet =false;
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // insertDatabase();
-          if(isBottomsheet){
-            Navigator.pop(context);
-            isBottomsheet =false;
-            setState(() {
-              iconData =Icons.add;
-            });
-          }else{scaffoldKey.currentState?.showBottomSheet((context) => Container(
-            color: Colors.red,
-            width: double.infinity,
-            height: 200,
-          ));
-          isBottomsheet =true;
-          setState(() {
-            iconData =Icons.accessibility_new_outlined;
-          });
-          }
+          if (isBottomsheet) {
+            // if (formKey.currentState!.validate()) {   }//عشان لما اجي اقفله من غير ما اكتب حاجه فيه تقول empty
+              insertDatabase(
+                      title: titleController.text,
+                      time: timeController.text,
+                      date: dateController.text)
+                  .then((value) {
+                Navigator.pop(context);
+                isBottomsheet = false;
+                setState(() {
+                  iconData = Icons.add;
+                });
+              });
 
+          } else {
+            scaffoldKey.currentState?.showBottomSheet(
+              (context) => Container(
+                padding: EdgeInsetsDirectional.all(10),
+                color: Colors.white,
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: titleController,
+                        keyboardType: TextInputType.text,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          prefix: Icon(Icons.title),
+                          labelText: 'Task Title',
+                        ),
+                        validator: (String? value) {
+                          if (value!.isEmpty) {
+                            return 'empty';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(
+                        height: 15,
+                      ),
+                      TextFormField(
+                        controller: timeController,
+                        keyboardType: TextInputType.datetime,
+                        onTap: () {
+                          print('timming tapped');
+                          showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.now())
+                              .then((value) {
+                            timeController.text =
+                                value!.format(context).toString();
+                            print(value.format(context));
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          prefix: Icon(Icons.watch_later),
+                          labelText: ' Task Time',
+                        ),
+                        validator: (String? value) {
+                          if (value!.isEmpty) {
+                            return 'time empty';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(
+                        height: 15,
+                      ),
+                      TextFormField(
+                        controller: dateController,
+                        keyboardType: TextInputType.datetime,
+                        onTap: () {
+                          print('date tapped');
+                          showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.parse('2023-01-01'))
+                              .then((value) {
+                            print(DateFormat.yMMMd().format(value!));
+                            dateController.text =
+                                DateFormat.yMMMd().format(value);
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          prefix: Icon(Icons.calendar_month),
+                          labelText: ' Task date',
+                        ),
+                        validator: (String? value) {
+                          if (value!.isEmpty) {
+                            return 'date empty';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              elevation: 20,
+            );
+            isBottomsheet = true;
+            setState(() {
+              iconData = Icons.accessibility_new_outlined;
+            });
+          }
         },
         child: Icon(iconData),
       ),
@@ -103,11 +202,12 @@ bool isBottomsheet =false;
     );
   }
 
-  void insertDatabase() {
-    database?.transaction((txn) {
+  Future insertDatabase(
+      {@required title, @required time, @required date}) async {
+    return await database?.transaction((txn) {
       txn
           .rawInsert(
-              'INSERT INTO tasks (title ,date, time ,statue) VALUES("first","444","234","new")')
+              'INSERT INTO tasks (title ,date, time ,statue) VALUES("$title","$time","$date","new")')
           .then((value) {
         print('$value inserted');
       }).catchError((error) {
