@@ -1,5 +1,7 @@
+import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'home_layout.dart';
+import 'package:untitled4/shared/bloc_observer.dart';
+import 'models/todo/home_layout.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -15,5 +17,7 @@ class MyApp extends StatelessWidget {
 }
 
 main() {
+  Bloc.observer = MyBlocObserver();
+  // Use cubits...
   return runApp(const MyApp());
 }
